@@ -23,7 +23,7 @@ public class ClientPart {
         this.socket = socket;
         this.in = new DataInputStream(socket.getInputStream());
         this.out = new DataOutputStream(socket.getOutputStream());
-        userCount ++;
+        userCount++;
         this.username = "User" + userCount;
 
         new Thread(() -> {
@@ -32,17 +32,24 @@ public class ClientPart {
                 while (true) {
                     String message = in.readUTF();
                     if (message.startsWith("/")) {
-                        if(message.equals("/exit")) {
+                        if (message.equals("/exit")) {
                             sendMessage("/disconnect");
                             break;
                         } else if (message.startsWith("/name")) {
-                            server.broadcastMessage(username + " сменил имя на " + nameTake(message));
-                            username = nameTake(message);
-                            continue;
+                            if (nameTake(message) == null) {
+                                this.sendMessage("Введите новое имя через пробел после команды /name :");
+                            } else {
+                                server.broadcastMessage(username + " сменил имя на " + nameTake(message));
+                                server.changeName(username, nameTake(message));
+                                username = nameTake(message);
+                            }
                         } else if (message.startsWith("/w")) {
-                            server.toUserMessage(nameTake(message), "Личное сообщение от " +
-                                    username + ": " + message.substring(nameTake(message).length() + 4));
-                            continue;
+                            if (nameTake(message) == null) {
+                                this.sendMessage("Введите имя получателя через пробел после команды /w :");
+                            } else {
+                                server.toUserMessage(nameTake(message), "Личное сообщение от " +
+                                        username + ": " + message.substring(nameTake(message).length() + 4));
+                            }
                         }
 
                         continue;
@@ -67,6 +74,9 @@ public class ClientPart {
 
     private String nameTake(String str) {
         String[] part = str.split(" ");
+        if (part.length < 2) {
+            return null;
+        }
         return part[1];
     }
 

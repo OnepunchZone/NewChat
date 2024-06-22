@@ -2,16 +2,15 @@ package ru.otus.chat.server;
 
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class Server {
     private int port;
-    private List<ClientPart> clients;
+    private Map<String, ClientPart> clients;
 
     public Server(int port) {
         this.port = port;
-        this.clients = new ArrayList<>();
+        this.clients = new HashMap<>();
     }
 
     public void start() {
@@ -28,25 +27,26 @@ public class Server {
 
     public synchronized void subscribe(ClientPart clientPart) {
         broadcastMessage("К чату присоеденился: " + clientPart.getUsername());
-        clients.add(clientPart);
+        clients.put(clientPart.getUsername(), clientPart);
     }
 
     public synchronized void unsubscribe(ClientPart clientPart) {
-        clients.remove(clientPart);
+        clients.remove(clientPart.getUsername(), clientPart);
         broadcastMessage(clientPart.getUsername() + " покинул чат.");
     }
 
     public synchronized void broadcastMessage(String message) {
-        for (ClientPart c : clients) {
+        for (ClientPart c : clients.values()) {
             c.sendMessage(message);
         }
     }
 
     public synchronized void toUserMessage(String name, String message) {
-        for (ClientPart c : clients) {
-            if (c.getUsername().equals(name)) {
-                c.sendMessage(message);
-            }
-        }
+        clients.get(name).sendMessage(message);
+    }
+
+    public synchronized void changeName(String pastName, String newName) {
+        ClientPart newC = clients.remove(pastName);
+        clients.put(newName, newC);
     }
 }
