@@ -24,6 +24,10 @@ public class Client {
                     if (message.equals("/disconnect")) {
                         break;
                     }
+                    if (message.startsWith("/correctauth ")) {
+                        System.out.println("Успешный вход пользователя " + message.split(" ")[1]);
+                        continue;
+                    }
                     System.out.println(message);
                 }
             } catch (IOException e) {

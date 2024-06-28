@@ -7,18 +7,25 @@ import java.util.*;
 public class Server {
     private int port;
     private Map<String, ClientPart> clients;
+    private AuthenticationProvider authenticationProvider;
+
+    public AuthenticationProvider getAuthenticationProvider() {
+        return authenticationProvider;
+    }
 
     public Server(int port) {
         this.port = port;
         this.clients = new HashMap<>();
+        this.authenticationProvider = new InMemoryAuthenticationProvider(this);
     }
 
     public void start() {
         try (ServerSocket server = new ServerSocket(port)) {
             System.out.println("Сервер запущен. Порт : " + port);
+            authenticationProvider.initialize();
             while (true) {
                 Socket socket = server.accept();
-                subscribe(new ClientPart(this, socket));
+                new ClientPart(this, socket);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -48,5 +55,18 @@ public class Server {
     public synchronized void changeName(String pastName, String newName) {
         ClientPart newC = clients.remove(pastName);
         clients.put(newName, newC);
+    }
+
+    public boolean isUsernameIsBusy(String username) {
+        return clients.containsKey(username);
+    }
+
+    public synchronized void banUser(ClientPart clientPart, String nameToBan) {
+        if (clientPart.getUsername().equals(authenticationProvider.getAdminName())) {
+            clients.get(nameToBan).sendMessage("/disconnect");
+            broadcastMessage(nameToBan + " удалён из чата за нарушение правил.");
+        } else {
+            toUserMessage(clientPart.getUsername(), "Нет прав для этого действия.");
+        }
     }
 }
