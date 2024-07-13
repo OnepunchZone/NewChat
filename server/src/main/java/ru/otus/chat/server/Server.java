@@ -1,7 +1,10 @@
 package ru.otus.chat.server;
 
+import ru.otus.chat.server.authbd.AuthUserJdbc;
+
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.SQLException;
 import java.util.*;
 
 public class Server {
@@ -13,16 +16,15 @@ public class Server {
         return authenticationProvider;
     }
 
-    public Server(int port) {
+    public Server(int port) throws SQLException {
         this.port = port;
         this.clients = new HashMap<>();
-        this.authenticationProvider = new InMemoryAuthenticationProvider(this);
+        this.authenticationProvider = new AuthUserJdbc(this);
     }
 
     public void start() {
         try (ServerSocket server = new ServerSocket(port)) {
             System.out.println("Сервер запущен. Порт : " + port);
-            authenticationProvider.initialize();
             while (true) {
                 Socket socket = server.accept();
                 new ClientPart(this, socket);
